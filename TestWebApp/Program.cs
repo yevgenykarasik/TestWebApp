@@ -33,7 +33,7 @@ public class TestMicroservice
             throw new InvalidOperationException("MaxNumberOfMsgsPerSecondPerAccount cannot be read from the config file");
         }
 
-        timer = new System.Timers.Timer(100000);
+        timer = new System.Timers.Timer(1000);
         timer.Elapsed += ResetAccountMsgCountersEverySecond;
         // Enable the Timer
         timer.Enabled = true;
@@ -78,10 +78,9 @@ public class TestMicroservice
 
     public static void ResetAccountMsgCountersEverySecond(Object source, ElapsedEventArgs e)
     {
+        app.Logger.LogInformation("Reset counters for accounts but don't reset counters for phones as there is no requirement for that in the assignment");
         foreach (var accountId in accountPhones.Keys)
         {
-            long milliseconds = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
-            app.Logger.LogInformation(milliseconds + " reset counters for accounts but don't reset counters for phones as there is no requirement for that in the assignment");
             numberOfMsgsSentFromAccount[accountId] = 0;
         }
     }
