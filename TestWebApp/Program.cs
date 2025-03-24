@@ -96,7 +96,7 @@ public class TestMicroservice
             numberOfMsgsSentFromAccount[accountId] = 0;
         }
 
-        timer = new System.Timers.Timer(60000);
+        timer = new System.Timers.Timer(1000);
         timer.Elapsed += ResetAccountMsgCountersEverySecond;
         // Enable the Timer
         timer.Enabled = true;
