@@ -1,5 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
+using System.Collections.Generic;
 
 namespace TestWebApp.Controllers
 {
@@ -29,15 +31,35 @@ namespace TestWebApp.Controllers
 
             try
             {
+                if (TestMicroservice.accountPhones.ContainsKey(accountId))
+                {
+                    List<string> phonesOfTheAccount = TestMicroservice.accountPhones[accountId];
+                    if (!phonesOfTheAccount.Contains(phoneNumber))
+                    {
+                        phonesOfTheAccount.Add(phoneNumber);
+                        TestMicroservice.numberOfMsgsSentFromPhone.TryAdd(phoneNumber, 0);
+                    }
+                }
+                else
+                {
+                    List<string> phonesOfTheAccount = new List<string>();
+                    phonesOfTheAccount.Add(phoneNumber);
+                    TestMicroservice.accountPhones.Add(accountId, phonesOfTheAccount);
+                    TestMicroservice.numberOfMsgsSentFromAccount.TryAdd(accountId, 0);
+                    TestMicroservice.numberOfMsgsSentFromPhone.TryAdd(phoneNumber, 0);
+                }
+
                 if (!TestMicroservice.numberOfMsgsSentFromAccount.TryGetValue(accountId, out int numberOfMsgsSentFromTheAccount))
                 {
                     return StatusCode(StatusCodes.Status417ExpectationFailed, "could not get the number of msgs sent from account " + accountId);
                 }
                 else
                 {
+                    TestMicroservice.app.Logger.LogInformation("the number of msgs sent so far by the account " + accountId + " is " + numberOfMsgsSentFromTheAccount);
                     if (numberOfMsgsSentFromTheAccount == TestMicroservice.maxNumberOfMsgsPerSecondPerAccount)
                     {
-                        return StatusCode(StatusCodes.Status417ExpectationFailed, "could not get the number of msgs sent from phone " + phoneNumber);
+                        TestMicroservice.app.Logger.LogInformation("Can't sent the new msg because otherwise the number of msgs sent from the account " + accountId + " will exceed the limit");
+                        return StatusCode(StatusCodes.Status412PreconditionFailed, "Can't sent the new msg because otherwise the number of msgs sent from the account " + accountId + " will exceed the limit");
                     }
                     else
                     {
@@ -49,7 +71,8 @@ namespace TestWebApp.Controllers
                         {
                             if (numberOfMsgsSentFromThePhoneNumber == TestMicroservice.maxNumberOfMsgsPerPhoneNumber)
                             {
-                                return StatusCode(StatusCodes.Status417ExpectationFailed, "The limit of messages permitted to be send from the phone number " + phoneNumber + " is reached");
+                                TestMicroservice.app.Logger.LogInformation("Can't sent the new msg because otherwise the number of msgs sent from the phone " + phoneNumber + " will exceed the limit");
+                                return StatusCode(StatusCodes.Status412PreconditionFailed, "Can't sent the new msg because otherwise the number of msgs sent from the phone " + phoneNumber + " will exceed the limit");
                             }
                             else
                             {
@@ -63,7 +86,7 @@ namespace TestWebApp.Controllers
                                     }
                                     else
                                     {
-                                        //roll back the increment of the number of msgs sent from the phone
+                                        //roll back the increment of the number of msgs sent from the phone because we failed to increment the number of msgs sent from the account
                                         if (TestMicroservice.numberOfMsgsSentFromPhone.TryUpdate(phoneNumber, numberOfMsgsSentFromThePhoneNumber, numberOfMsgsSentFromThePhoneNumber + 1))
                                         {
                                             return StatusCode(StatusCodes.Status417ExpectationFailed, "could not increment the number of messages sent by account " + accountId);
