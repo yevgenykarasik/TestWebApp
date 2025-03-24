@@ -57,9 +57,8 @@ namespace TestWebApp.Controllers
                                 {
                                     if (TestMicroservice.numberOfMsgsSentFromAccount.TryUpdate(accountId, numberOfMsgsSentFromTheAccount + 1, numberOfMsgsSentFromTheAccount))
                                     {
-                                        TestMicroservice.app.Logger.LogInformation("The number of calls made from phone " + phoneNumber + " is " + (numberOfMsgsSentFromThePhoneNumber + 1).ToString());
-                                        TestMicroservice.app.Logger.LogInformation("The number of calls made from account " + accountId + " is " + (numberOfMsgsSentFromTheAccount + 1).ToString());
-                                        //forward the msg to provider
+                                        //forward the msg to provider.
+                                        //Not implemented because the assignment does not specify the method of forwarding (via RESTful call, or via a Message Queue, or what)
                                         return StatusCode(StatusCodes.Status200OK);
                                     }
                                     else
